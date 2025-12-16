@@ -6,6 +6,9 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.content.ComponentName
+import android.content.ServiceConnection
+import android.os.IBinder
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -13,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.audioplayer.media.MediaRepository
 import com.example.audioplayer.ui.MusicListAdapter
+import com.example.audioplayer.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,6 +29,51 @@ class MainActivity : AppCompatActivity() {
     // use an explicit Job so we can cancel it cleanly in onDestroy
     private val mainJob = Job()
     private val scope = CoroutineScope(mainJob + Dispatchers.Main)
+
+    // Service binding
+    private var musicService: MusicService? = null
+    private var bound = false
+
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as? MusicService.MusicBinder
+            musicService = binder?.getService()
+            bound = true
+            // if we already loaded items, sync playlist to service
+            val currentItems = adapterItems()
+            if (currentItems.isNotEmpty()) {
+                musicService?.setPlaylist(currentItems)
+            }
+            refreshNowPlaying()
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            bound = false
+            musicService = null
+            refreshNowPlaying()
+        }
+    }
+
+    private fun adapterItems(): List<Music> {
+        // reflection-like access: MusicListAdapter doesn't expose items, so we keep a copy via adapter.setItems usage.
+        // To keep changes minimal, we'll store the last loaded list in a field.
+        return lastLoadedList
+    }
+
+    private var lastLoadedList: List<Music> = emptyList()
+
+    private fun refreshNowPlaying() {
+        val tv = findViewById<android.widget.TextView>(R.id.tvNowPlaying)
+        val btn = findViewById<android.widget.ImageButton>(R.id.btnPlayPause)
+        val current = musicService?.getCurrentMusic()
+        if (current != null) {
+            tv.text = "${current.title} - ${current.artist}"
+            btn.setImageResource(if (musicService?.isPlaying() == true) R.drawable.ic_pause else R.drawable.ic_play)
+        } else {
+            tv.text = "未播放"
+            btn.setImageResource(R.drawable.ic_play)
+        }
+    }
 
     private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { perms ->
         val grantedAll = perms.values.all { it }
@@ -43,7 +92,36 @@ class MainActivity : AppCompatActivity() {
         // ensure empty state initially hidden until we decide
         findViewById<android.view.View>(R.id.emptyView).visibility = android.view.View.GONE
 
+        // hook up player controls
+        findViewById<android.widget.ImageButton>(R.id.btnPrev).setOnClickListener {
+            if (bound) musicService?.playPrevious() else Unit
+        }
+        findViewById<android.widget.ImageButton>(R.id.btnPlayPause).setOnClickListener {
+            if (!bound) return@setOnClickListener
+            if (musicService?.isPlaying() == true) musicService?.pause() else musicService?.play()
+            refreshNowPlaying()
+        }
+        findViewById<android.widget.ImageButton>(R.id.btnNext).setOnClickListener {
+            if (bound) musicService?.playNext() else Unit
+        }
+
         checkAndRequestPermission()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // bind to service so we can control playback
+        Intent(this, MusicService::class.java).also { intent ->
+            bindService(intent, connection, BIND_AUTO_CREATE)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (bound) {
+            unbindService(connection)
+            bound = false
+        }
     }
 
     private fun checkAndRequestPermission() {
@@ -103,6 +181,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             adapter.setItems(finalList)
+            lastLoadedList = finalList
 
             // toggle empty state view
             val empty = findViewById<android.view.View>(R.id.emptyView)
@@ -110,17 +189,28 @@ class MainActivity : AppCompatActivity() {
 
             // send playlist to service so it can manage queue
             if (finalList.isNotEmpty()) {
-                val intent = Intent(this@MainActivity, MusicService::class.java).apply {
-                    action = MusicService.ACTION_PLAY
-                    putParcelableArrayListExtra("playlist", ArrayList(finalList))
+                // If bound, set playlist directly; otherwise start the service with the playlist extra
+                if (bound) {
+                    musicService?.setPlaylist(finalList)
+                } else {
+                    val intent = Intent(this@MainActivity, MusicService::class.java).apply {
+                        action = MusicService.ACTION_PLAY
+                        putParcelableArrayListExtra("playlist", ArrayList(finalList))
+                    }
+                    ContextCompat.startForegroundService(this@MainActivity, intent)
                 }
-                ContextCompat.startForegroundService(this@MainActivity, intent)
             }
         }
     }
 
     private fun isDebugBuild(): Boolean {
-        return (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        // Prefer the generated BuildConfig.DEBUG flag when available; fall back to the
+        // applicationInfo flag check for extra safety in custom build environments.
+        return try {
+            BuildConfig.DEBUG
+        } catch (e: Exception) {
+            (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        }
     }
 
     private fun onSongClicked(song: Music, pos: Int) {
