@@ -16,7 +16,9 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="eabcd5f2-d319-4c76-9aaa-ca912af0a8e3" name="更改" comment="refactor: update project configuration and improve task management" />
+    <list default="true" id="eabcd5f2-d319-4c76-9aaa-ca912af0a8e3" name="更改" comment="refactor: streamline task management and update workspace configuration">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -66,12 +68,9 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;jingyingruodi&quot;
-  }
-}</component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {}
+}]]></component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/jingyingruodi/AudioPlayer.git&quot;,
@@ -105,7 +104,7 @@
     "cidr.known.project.marker": "true",
     "git-widget-placeholder": "master",
     "last_opened_file_path": "G:/Users/Administrator/Documents/College2/BuildTest/AudioPlayer",
-    "settings.editor.selected.configurable": "experimental"
+    "settings.editor.selected.configurable": "com.github.copilot.settings.chat.ChatConfigurable"
   }
 }]]></component>
   <component name="RunManager">
