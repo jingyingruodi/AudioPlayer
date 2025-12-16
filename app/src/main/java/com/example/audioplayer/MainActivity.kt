@@ -16,7 +16,6 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.audioplayer.media.MediaRepository
 import com.example.audioplayer.ui.MusicListAdapter
-import com.example.audioplayer.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -67,7 +66,7 @@ class MainActivity : AppCompatActivity() {
         val btn = findViewById<android.widget.ImageButton>(R.id.btnPlayPause)
         val current = musicService?.getCurrentMusic()
         if (current != null) {
-            tv.text = "${current.title} - ${current.artist}"
+            tv.text = getString(R.string.now_playing, current.title, current.artist)
             btn.setImageResource(if (musicService?.isPlaying() == true) R.drawable.ic_pause else R.drawable.ic_play)
         } else {
             tv.text = "未播放"
@@ -148,15 +147,16 @@ class MainActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.emptyView).visibility = android.view.View.VISIBLE
 
         AlertDialog.Builder(this)
-            .setTitle("权限需要")
-            .setMessage("应用需要读取媒体文件以显示音乐。请在设置中授予权限。")
-            .setPositiveButton("设置") { _, _ ->
-                // open app settings
+            .setTitle(R.string.permission_required_title)
+            .setMessage(R.string.permission_required_message)
+            .setPositiveButton(R.string.settings) { _, _ ->
+                // open app settings using ktx toUri
+                val uri = "package:$packageName".let { android.net.Uri.parse(it) }
                 startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = android.net.Uri.parse("package:$packageName")
+                    data = uri
                 })
             }
-            .setNegativeButton("取消", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
@@ -204,13 +204,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun isDebugBuild(): Boolean {
-        // Prefer the generated BuildConfig.DEBUG flag when available; fall back to the
-        // applicationInfo flag check for extra safety in custom build environments.
-        return try {
-            BuildConfig.DEBUG
-        } catch (e: Exception) {
-            (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
-        }
+        // Use ApplicationInfo.FLAG_DEBUGGABLE; avoids referencing generated BuildConfig
+        return (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
     }
 
     private fun onSongClicked(song: Music, pos: Int) {

@@ -27,6 +27,11 @@ class MusicService : Service() {
         const val ACTION_PAUSE = "com.example.audioplayer.ACTION_PAUSE"
         const val ACTION_NEXT = "com.example.audioplayer.ACTION_NEXT"
         const val ACTION_PREVIOUS = "com.example.audioplayer.ACTION_PREVIOUS"
+        // Broadcast actions for Activity UI updates
+        const val ACTION_BROADCAST_PLAYBACK_STATE = "com.example.audioplayer.ACTION_BROADCAST_PLAYBACK_STATE"
+        const val EXTRA_IS_PLAYING = "is_playing"
+        const val EXTRA_TITLE = "title"
+        const val EXTRA_ARTIST = "artist"
     }
 
     inner class MusicBinder : Binder() {
@@ -223,6 +228,18 @@ class MusicService : Service() {
         }
 
         startForeground(1, notificationBuilder.build())
+
+        // Broadcast current playback state so Activities / UI can update
+        try {
+            val b = Intent(ACTION_BROADCAST_PLAYBACK_STATE).apply {
+                putExtra(EXTRA_IS_PLAYING, isPlaying)
+                putExtra(EXTRA_TITLE, music.title)
+                putExtra(EXTRA_ARTIST, music.artist)
+            }
+            sendBroadcast(b)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun createNotificationChannel() {

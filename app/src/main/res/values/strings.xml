@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">AudioPlayer</string>
+    <string name="now_playing">%1$s - %2$s</string>
+    <string name="permission_required_title">权限需要</string>
+    <string name="permission_required_message">应用需要读取媒体文件以显示音乐。请在设置中授予权限。</string>
+    <string name="settings">设置</string>
+    <string name="cancel">取消</string>
+    <string name="not_playing">未播放</string>
 </resources>

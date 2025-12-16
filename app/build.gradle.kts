@@ -8,6 +8,12 @@ android {
     namespace = "com.example.audioplayer"
     compileSdk = 36
 
+    // Ensure BuildConfig is generated for this module (should be true by default,
+    // but make it explicit to avoid BuildConfig unresolved errors in some setups).
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.example.audioplayer"
         minSdk = 26
@@ -15,7 +21,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnit4"
     }
 
     buildTypes {
