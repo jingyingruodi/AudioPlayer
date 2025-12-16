@@ -20,6 +20,8 @@ class MusicService : Service() {
     private var mediaPlayer: MediaPlayer? = null
     private var musicList: List<Music> = emptyList()
     private var currentPosition = -1
+    // Playback listeners registered by bound clients (Activity)
+    private val playbackListeners = mutableSetOf<PlaybackListener>()
 
     companion object {
         const val CHANNEL_ID = "MusicServiceChannel"
@@ -32,6 +34,12 @@ class MusicService : Service() {
         const val EXTRA_IS_PLAYING = "is_playing"
         const val EXTRA_TITLE = "title"
         const val EXTRA_ARTIST = "artist"
+    }
+
+    // Simple interface for in-process callbacks so Activities bound to the service can
+    // receive immediate playback state updates without using broadcasts.
+    interface PlaybackListener {
+        fun onPlaybackStateChanged(title: String?, artist: String?, isPlaying: Boolean)
     }
 
     inner class MusicBinder : Binder() {
@@ -168,6 +176,15 @@ class MusicService : Service() {
         return null
     }
 
+    // Allow clients to register/unregister playback listeners
+    fun registerPlaybackListener(l: PlaybackListener) {
+        playbackListeners.add(l)
+    }
+
+    fun unregisterPlaybackListener(l: PlaybackListener) {
+        playbackListeners.remove(l)
+    }
+
     private fun updateNotification(music: Music, isPlaying: Boolean) {
         val playIntent = Intent(this, MusicService::class.java).apply { action = ACTION_PLAY }
         val pauseIntent = Intent(this, MusicService::class.java).apply { action = ACTION_PAUSE }
@@ -240,6 +257,19 @@ class MusicService : Service() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+
+        // Also notify any in-process registered listeners
+        try {
+            for (l in playbackListeners) {
+                try {
+                    l.onPlaybackStateChanged(music.title, music.artist, isPlaying)
+                } catch (ex: Exception) {
+                    // ignore listener errors
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun createNotificationChannel() {
@@ -257,5 +287,6 @@ class MusicService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         mediaPlayer?.release()
+        playbackListeners.clear()
     }
 }

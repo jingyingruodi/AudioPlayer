@@ -16,8 +16,10 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="eabcd5f2-d319-4c76-9aaa-ca912af0a8e3" name="更改" comment="refactor: update workspace configuration and streamline task management">
+    <list default="true" id="eabcd5f2-d319-4c76-9aaa-ca912af0a8e3" name="更改" comment="refactor: enhance UI strings and improve playback state broadcasting">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/audioplayer/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/audioplayer/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/audioplayer/MusicService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/audioplayer/MusicService.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,6 +45,9 @@
   <component name="ExternalProjectsManager">
     <system id="GRADLE">
       <state>
+        <task path="$PROJECT_DIR$">
+          <activation />
+        </task>
         <projects_view>
           <tree_state>
             <expand>
@@ -78,7 +83,7 @@
   }
 }</component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="ProjectErrors" />
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 8
@@ -94,6 +99,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Android App.app.executor": "Run",
+    "Gradle.'AudioPlayer.app' 中的测试.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
@@ -105,7 +111,10 @@
     "git-widget-placeholder": "master",
     "ignore.virus.scanning.warn.message": "true",
     "last_opened_file_path": "G:/Users/Administrator/Documents/College2/BuildTest/AudioPlayer",
-    "settings.editor.selected.configurable": "com.github.copilot.settings.chat.ChatConfigurable"
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.17",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "com.github.copilot.settings.mcp.McpConfigurable"
   }
 }]]></component>
   <component name="RunManager">
@@ -262,7 +271,15 @@
       <option name="project" value="LOCAL" />
       <updated>1765878474484</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="refactor: enhance UI strings and improve playback state broadcasting">
+      <option name="closed" value="true" />
+      <created>1765879019813</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1765879019813</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -284,7 +301,8 @@
     <MESSAGE value="refactor: improve coroutine management and remove media session handling" />
     <MESSAGE value="refactor: update project configuration and improve task management" />
     <MESSAGE value="refactor: update workspace configuration and streamline task management" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor: update workspace configuration and streamline task management" />
+    <MESSAGE value="refactor: enhance UI strings and improve playback state broadcasting" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor: enhance UI strings and improve playback state broadcasting" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

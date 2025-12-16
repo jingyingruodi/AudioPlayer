@@ -43,12 +43,15 @@ class MainActivity : AppCompatActivity() {
             if (currentItems.isNotEmpty()) {
                 musicService?.setPlaylist(currentItems)
             }
+            // register a playback listener to receive immediate updates
+            musicService?.registerPlaybackListener(playbackListener)
             refreshNowPlaying()
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
             bound = false
             musicService = null
+            try { musicService?.unregisterPlaybackListener(playbackListener) } catch (_: Exception) {}
             refreshNowPlaying()
         }
     }
@@ -118,6 +121,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         if (bound) {
+            try { musicService?.unregisterPlaybackListener(playbackListener) } catch (_: Exception) {}
             unbindService(connection)
             bound = false
         }
@@ -209,6 +213,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onSongClicked(song: Music, pos: Int) {
+        // prevent attempting to play the debug placeholder with an empty URI
+        if (song.uri == android.net.Uri.EMPTY) {
+            android.widget.Toast.makeText(this, "此为示例音乐，无法播放真实音频。", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+
         // start service and play
         val intent = Intent(this, MusicService::class.java).apply {
             action = MusicService.ACTION_PLAY
@@ -216,6 +226,19 @@ class MainActivity : AppCompatActivity() {
             putExtra("song_pos", pos)
         }
         ContextCompat.startForegroundService(this, intent)
+    }
+
+    private val playbackListener = object : MusicService.PlaybackListener {
+        override fun onPlaybackStateChanged(title: String?, artist: String?, isPlaying: Boolean) {
+            runOnUiThread {
+                val tv = findViewById<android.widget.TextView>(R.id.tvNowPlaying)
+                val btn = findViewById<android.widget.ImageButton>(R.id.btnPlayPause)
+                if (!title.isNullOrEmpty() || !artist.isNullOrEmpty()) {
+                    tv.text = getString(R.string.now_playing, title ?: "", artist ?: "")
+                }
+                btn.setImageResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+            }
+        }
     }
 
     override fun onDestroy() {
