@@ -1,161 +1,105 @@
 package com.example.audioplayer
 
 import android.Manifest
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.IBinder
-import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.example.audioplayer.media.MediaRepository
+import com.example.audioplayer.ui.MusicListAdapter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var tvNowPlaying: TextView
-    private lateinit var btnPrevious: ImageButton
-    private lateinit var btnPlayPause: ImageButton
-    private lateinit var btnNext: ImageButton
+    private val adapter by lazy { MusicListAdapter { song, pos -> onSongClicked(song, pos) } }
+    private val scope = CoroutineScope(Job() + Dispatchers.Main)
 
-    private var musicService: MusicService? = null
-    private var isBound = false
-    private var musicList: List<Music> = emptyList()
-
-    private val connection = object : ServiceConnection {
-        override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            val binder = service as MusicService.MusicBinder
-            musicService = binder.getService()
-            isBound = true
-            musicService?.setPlaylist(musicList)
-            updateUI()
-        }
-
-        override fun onServiceDisconnected(arg0: ComponentName) {
-            isBound = false
-            musicService = null
-        }
+    private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { perms ->
+        val grantedAll = perms.values.all { it }
+        if (grantedAll) loadSongs()
+        else showPermissionRationale()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        recyclerView = findViewById(R.id.recyclerView)
-        tvNowPlaying = findViewById(R.id.tvNowPlaying)
-        btnPrevious = findViewById(R.id.btnPrevious)
-        btnPlayPause = findViewById(R.id.btnPlayPause)
-        btnNext = findViewById(R.id.btnNext)
+        val rv = findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.recyclerSongs)
+        rv.layoutManager = LinearLayoutManager(this)
+        rv.adapter = adapter
 
-        recyclerView.layoutManager = LinearLayoutManager(this)
-
-        checkPermissions()
-        setupControls()
+        checkAndRequestPermission()
     }
 
-    private fun checkPermissions() {
-        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.POST_NOTIFICATIONS)
+    private fun checkAndRequestPermission() {
+        val needed = mutableListOf<String>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                needed.add(Manifest.permission.READ_MEDIA_AUDIO)
+            }
         } else {
-            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
-
-        val neededPermissions = permissions.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }
-
-        if (neededPermissions.isNotEmpty()) {
-            requestPermissionsLauncher.launch(neededPermissions.toTypedArray())
-        } else {
-            loadMusic()
-        }
-    }
-
-    private val requestPermissionsLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            val allGranted = permissions.entries.all { it.value }
-            if (allGranted) {
-                loadMusic()
-            } else {
-                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                needed.add(Manifest.permission.READ_EXTERNAL_STORAGE)
             }
         }
 
-    private fun loadMusic() {
-        musicList = MusicScanner.getAllAudio(this)
-        val adapter = MusicAdapter(musicList) { position ->
-            musicService?.playMusic(position)
-            updateUI()
-        }
-        recyclerView.adapter = adapter
-
-        // Start and Bind Service
-        val intent = Intent(this, MusicService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
+        if (needed.isNotEmpty()) {
+            requestPermission.launch(needed.toTypedArray())
         } else {
-            startService(intent)
+            loadSongs()
         }
-        bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }
 
-    private fun setupControls() {
-        btnPlayPause.setOnClickListener {
-            if (musicService?.isPlaying() == true) {
-                musicService?.pause()
-            } else {
-                musicService?.play()
+    private fun showPermissionRationale() {
+        AlertDialog.Builder(this)
+            .setTitle("权限需要")
+            .setMessage("应用需要读取媒体文件以显示音乐。请在设置中授予权限。")
+            .setPositiveButton("设置") { _, _ ->
+                // open app settings
+                startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = android.net.Uri.parse("package:$packageName")
+                })
             }
-            updateUI()
-        }
+            .setNegativeButton("取消", null)
+            .show()
+    }
 
-        btnNext.setOnClickListener {
-            musicService?.playNext()
-            updateUI()
-        }
-
-        btnPrevious.setOnClickListener {
-            musicService?.playPrevious()
-            updateUI()
+    private fun loadSongs() {
+        scope.launch {
+            val list = withContext(Dispatchers.IO) { MediaRepository.loadAudioFiles(this@MainActivity) }
+            adapter.setItems(list)
+            // send playlist to service so it can manage queue
+            if (list.isNotEmpty()) {
+                val intent = Intent(this@MainActivity, MusicService::class.java).apply {
+                    action = MusicService.ACTION_PLAY
+                    putParcelableArrayListExtra("playlist", ArrayList(list))
+                }
+                ContextCompat.startForegroundService(this@MainActivity, intent)
+            }
         }
     }
 
-    private fun updateUI() {
-        if (musicService?.isPlaying() == true) {
-            btnPlayPause.setImageResource(R.drawable.ic_pause)
-        } else {
-            btnPlayPause.setImageResource(R.drawable.ic_play)
+    private fun onSongClicked(song: com.example.audioplayer.Music, pos: Int) {
+        // start service and play
+        val intent = Intent(this, MusicService::class.java).apply {
+            action = MusicService.ACTION_PLAY
+            putExtra("song_uri", song.uri.toString())
+            putExtra("song_pos", pos)
         }
-
-        val currentMusic = musicService?.getCurrentMusic()
-        if (currentMusic != null) {
-            tvNowPlaying.text = "${currentMusic.title} - ${currentMusic.artist}"
-        } else {
-            tvNowPlaying.text = "Not Playing"
-        }
+        ContextCompat.startForegroundService(this, intent)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        if (isBound) {
-            unbindService(connection)
-            isBound = false
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (isBound) {
-            updateUI()
-        }
+        scope.coroutineContext.cancelChildren()
     }
 }

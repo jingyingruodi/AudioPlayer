@@ -8,6 +8,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.media.AudioAttributes
 import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -71,17 +72,56 @@ class MusicService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        handleAction(intent?.action)
-        return START_NOT_STICKY
-    }
-
-    private fun handleAction(action: String?) {
-        when (action) {
-            ACTION_PLAY -> play()
-            ACTION_PAUSE -> pause()
-            ACTION_NEXT -> playNext()
-            ACTION_PREVIOUS -> playPrevious()
+        // Accept playlist sent from Activity
+        intent?.getParcelableArrayListExtra<Music>("playlist")?.let { list ->
+            if (list.isNotEmpty()) {
+                musicList = list
+            }
         }
+
+        // Handle explicit play requests with a uri extra
+        intent?.let {
+            when (it.action) {
+                ACTION_PLAY -> {
+                    val uriString = it.getStringExtra("song_uri")
+                    val pos = it.getIntExtra("song_pos", -1)
+                    if (uriString != null) {
+                        try {
+                            val uri = Uri.parse(uriString)
+                            mediaPlayer?.release()
+                            mediaPlayer = MediaPlayer().apply {
+                                setAudioAttributes(
+                                    AudioAttributes.Builder()
+                                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                                        .build()
+                                )
+                                setDataSource(applicationContext, uri)
+                                prepare()
+                                start()
+                                setOnCompletionListener { playNext() }
+                            }
+
+                            // build a minimal Music object (Music requires non-null artist/album)
+                            val titleGuess = uri.lastPathSegment ?: "Unknown"
+                            val tmpMusic = Music(uriString.hashCode().toLong(), titleGuess, "", "", mediaPlayer?.duration?.toLong() ?: 0L, uri, null)
+
+                            // Update session metadata with minimal info
+                            updateMediaSession(tmpMusic, PlaybackStateCompat.STATE_PLAYING)
+                            updateNotification(tmpMusic, true)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    } else if (pos >= 0) {
+                        playMusic(pos)
+                    }
+                }
+                ACTION_PAUSE -> pause()
+                ACTION_NEXT -> playNext()
+                ACTION_PREVIOUS -> playPrevious()
+            }
+        }
+        return START_NOT_STICKY
     }
 
     fun setPlaylist(list: List<Music>) {
