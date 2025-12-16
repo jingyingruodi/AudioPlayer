@@ -16,12 +16,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="eabcd5f2-d319-4c76-9aaa-ca912af0a8e3" name="更改" comment="Based on the provided diffs, here is a concise commit message:&#10;&#10;refactor: implement direct playback listener and prevent invalid playback&#10;&#10;- Add PlaybackListener interface to MusicService for immediate in-process state updates&#10;- Register/unregister listener in MainActivity to update UI (now playing text, play/pause button)&#10;- Notify registered listeners on playback state changes in MusicService&#10;- Prevent attempting to play debug placeholder songs with empty URIs">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/audioplayer/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/audioplayer/MainActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/audioplayer/media/MediaRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/audioplayer/media/MediaRepository.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml" afterDir="false" />
-    </list>
+    <list default="true" id="eabcd5f2-d319-4c76-9aaa-ca912af0a8e3" name="更改" comment="feat: add FAB to import audio files and support metadata loading from URIs" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -288,7 +283,15 @@
       <option name="project" value="LOCAL" />
       <updated>1765885179167</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="feat: add FAB to import audio files and support metadata loading from URIs">
+      <option name="closed" value="true" />
+      <created>1765916913023</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1765916913023</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -312,7 +315,8 @@
     <MESSAGE value="refactor: update workspace configuration and streamline task management" />
     <MESSAGE value="refactor: enhance UI strings and improve playback state broadcasting" />
     <MESSAGE value="Based on the provided diffs, here is a concise commit message:&#10;&#10;refactor: implement direct playback listener and prevent invalid playback&#10;&#10;- Add PlaybackListener interface to MusicService for immediate in-process state updates&#10;- Register/unregister listener in MainActivity to update UI (now playing text, play/pause button)&#10;- Notify registered listeners on playback state changes in MusicService&#10;- Prevent attempting to play debug placeholder songs with empty URIs" />
-    <option name="LAST_COMMIT_MESSAGE" value="Based on the provided diffs, here is a concise commit message:&#10;&#10;refactor: implement direct playback listener and prevent invalid playback&#10;&#10;- Add PlaybackListener interface to MusicService for immediate in-process state updates&#10;- Register/unregister listener in MainActivity to update UI (now playing text, play/pause button)&#10;- Notify registered listeners on playback state changes in MusicService&#10;- Prevent attempting to play debug placeholder songs with empty URIs" />
+    <MESSAGE value="feat: add FAB to import audio files and support metadata loading from URIs" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: add FAB to import audio files and support metadata loading from URIs" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
