@@ -21,7 +21,9 @@ import kotlinx.coroutines.withContext
 class MainActivity : AppCompatActivity() {
 
     private val adapter by lazy { MusicListAdapter { song, pos -> onSongClicked(song, pos) } }
-    private val scope = CoroutineScope(Job() + Dispatchers.Main)
+    // use an explicit Job so we can cancel it cleanly in onDestroy
+    private val mainJob = Job()
+    private val scope = CoroutineScope(mainJob + Dispatchers.Main)
 
     private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { perms ->
         val grantedAll = perms.values.all { it }
@@ -100,6 +102,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        scope.coroutineContext.cancelChildren()
+        // cancel the job to stop coroutines
+        mainJob.cancel()
     }
 }

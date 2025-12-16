@@ -12,9 +12,6 @@ import android.net.Uri
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
 
 class MusicService : Service() {
@@ -23,7 +20,6 @@ class MusicService : Service() {
     private var mediaPlayer: MediaPlayer? = null
     private var musicList: List<Music> = emptyList()
     private var currentPosition = -1
-    private lateinit var mediaSession: MediaSessionCompat
 
     companion object {
         const val CHANNEL_ID = "MusicServiceChannel"
@@ -40,31 +36,6 @@ class MusicService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        initMediaSession()
-    }
-
-    private fun initMediaSession() {
-        mediaSession = MediaSessionCompat(this, "MusicService").apply {
-            setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
-            setCallback(object : MediaSessionCompat.Callback() {
-                override fun onPlay() {
-                    play()
-                }
-
-                override fun onPause() {
-                    pause()
-                }
-
-                override fun onSkipToNext() {
-                    playNext()
-                }
-
-                override fun onSkipToPrevious() {
-                    playPrevious()
-                }
-            })
-            isActive = true
-        }
     }
 
     override fun onBind(intent: Intent): IBinder {
@@ -102,12 +73,10 @@ class MusicService : Service() {
                                 setOnCompletionListener { playNext() }
                             }
 
-                            // build a minimal Music object (Music requires non-null artist/album)
                             val titleGuess = uri.lastPathSegment ?: "Unknown"
                             val tmpMusic = Music(uriString.hashCode().toLong(), titleGuess, "", "", mediaPlayer?.duration?.toLong() ?: 0L, uri, null)
 
-                            // Update session metadata with minimal info
-                            updateMediaSession(tmpMusic, PlaybackStateCompat.STATE_PLAYING)
+                            // Update notification only (no media session)
                             updateNotification(tmpMusic, true)
                         } catch (e: Exception) {
                             e.printStackTrace()
@@ -148,7 +117,7 @@ class MusicService : Service() {
         }
 
         updateNotification(music, true)
-        updateMediaSession(music, PlaybackStateCompat.STATE_PLAYING)
+        // no media session update
     }
 
     fun play() {
@@ -156,7 +125,6 @@ class MusicService : Service() {
             mediaPlayer?.start()
             if (currentPosition != -1) {
                 updateNotification(musicList[currentPosition], true)
-                updateMediaSession(musicList[currentPosition], PlaybackStateCompat.STATE_PLAYING)
             }
         }
     }
@@ -166,7 +134,6 @@ class MusicService : Service() {
             mediaPlayer?.pause()
             if (currentPosition != -1) {
                 updateNotification(musicList[currentPosition], false)
-                updateMediaSession(musicList[currentPosition], PlaybackStateCompat.STATE_PAUSED)
             }
         }
     }
@@ -196,24 +163,6 @@ class MusicService : Service() {
         return null
     }
 
-    private fun updateMediaSession(music: Music, state: Int) {
-        mediaSession.setMetadata(
-            MediaMetadataCompat.Builder()
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, music.title)
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, music.artist)
-                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, music.album)
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, music.duration)
-                .build()
-        )
-
-        mediaSession.setPlaybackState(
-            PlaybackStateCompat.Builder()
-                .setState(state, mediaPlayer?.currentPosition?.toLong() ?: 0L, 1.0f)
-                .setActions(PlaybackStateCompat.ACTION_PLAY or PlaybackStateCompat.ACTION_PAUSE or PlaybackStateCompat.ACTION_SKIP_TO_NEXT or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
-                .build()
-        )
-    }
-
     private fun updateNotification(music: Music, isPlaying: Boolean) {
         val playIntent = Intent(this, MusicService::class.java).apply { action = ACTION_PLAY }
         val pauseIntent = Intent(this, MusicService::class.java).apply { action = ACTION_PAUSE }
@@ -235,7 +184,6 @@ class MusicService : Service() {
             )
         }
 
-        // Use a null Bitmap variable to avoid ambiguity if needed, or just don't set it if null
         val largeIcon: Bitmap? = null
 
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
@@ -266,8 +214,7 @@ class MusicService : Service() {
                 )
             )
             .setStyle(
-                androidx.media.app.NotificationCompat.MediaStyle()
-                    .setMediaSession(mediaSession.sessionToken)
+                NotificationCompat.BigTextStyle().bigText(music.artist)
             )
             .setOngoing(isPlaying)
 
@@ -293,6 +240,5 @@ class MusicService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         mediaPlayer?.release()
-        mediaSession.release()
     }
 }
