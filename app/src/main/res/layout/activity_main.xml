@@ -71,4 +71,15 @@
 
     </LinearLayout>
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAdd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:contentDescription="添加音频"
+        app:srcCompat="@drawable/ic_play"
+        app:tint="@color/white"
+        app:layout_anchorGravity="bottom|end"
+        app:layout_anchor="@id/playerBar" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

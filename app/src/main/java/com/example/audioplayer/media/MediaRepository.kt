@@ -4,6 +4,10 @@ import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
+import android.media.MediaMetadataRetriever
+import android.content.Intent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.example.audioplayer.Music
 
 object MediaRepository {
@@ -43,5 +47,32 @@ object MediaRepository {
 
         return songs
     }
-}
 
+    // Load metadata for a set of document URIs (e.g., from Storage Access Framework)
+    suspend fun loadFromUris(context: Context, uris: List<Uri>): List<Music> = withContext(Dispatchers.IO) {
+        val result = mutableListOf<Music>()
+        val mmr = MediaMetadataRetriever()
+        try {
+            for (u in uris) {
+                try {
+                    // take persistable permission if available
+                    context.contentResolver.takePersistableUriPermission(u, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                } catch (_: Exception) {}
+                try {
+                    mmr.setDataSource(context, u)
+                    val title = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: (u.lastPathSegment ?: "Unknown")
+                    val artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
+                    val album = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM) ?: ""
+                    val dur = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                    val duration = dur?.toLongOrNull() ?: 0L
+                    result.add(Music(u.hashCode().toLong(), title, artist, album, duration, u, null))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        } finally {
+            try { mmr.release() } catch (_: Exception) {}
+        }
+        result
+    }
+}

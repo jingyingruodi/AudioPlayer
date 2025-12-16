@@ -9,13 +9,16 @@ import android.os.Bundle
 import android.content.ComponentName
 import android.content.ServiceConnection
 import android.os.IBinder
+import android.net.Uri
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.audioplayer.media.MediaRepository
 import com.example.audioplayer.ui.MusicListAdapter
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -83,6 +86,8 @@ class MainActivity : AppCompatActivity() {
         else showPermissionRationale()
     }
 
+    private lateinit var openDocumentLauncher: ActivityResultLauncher<Array<String>>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -105,6 +110,32 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<android.widget.ImageButton>(R.id.btnNext).setOnClickListener {
             if (bound) musicService?.playNext() else Unit
+        }
+
+        // register open document launcher for selecting audio (multiple selection)
+        openDocumentLauncher = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris: List<Uri> ->
+            if (!uris.isNullOrEmpty()) {
+                scope.launch {
+                    val loaded = withContext(Dispatchers.IO) { MediaRepository.loadFromUris(this@MainActivity, uris) }
+                    if (loaded.isNotEmpty()) {
+                        val newList = (lastLoadedList + loaded).toMutableList()
+                        adapter.setItems(newList)
+                        lastLoadedList = newList
+                        if (bound) musicService?.setPlaylist(newList) else {
+                            val intent = Intent(this@MainActivity, MusicService::class.java).apply {
+                                action = MusicService.ACTION_PLAY
+                                putParcelableArrayListExtra("playlist", ArrayList(newList))
+                            }
+                            ContextCompat.startForegroundService(this@MainActivity, intent)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Floating action button to add audio files
+        findViewById<FloatingActionButton>(R.id.fabAdd).setOnClickListener {
+            openDocumentLauncher.launch(arrayOf("audio/*"))
         }
 
         checkAndRequestPermission()
