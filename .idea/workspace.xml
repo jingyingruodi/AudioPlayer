@@ -4,12 +4,23 @@
     <shared>
       <config />
     </shared>
+    <layouts>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/item_song.xml">
+        <config>
+          <theme>@style/Theme.AudioPlayer</theme>
+        </config>
+      </layout>
+    </layouts>
   </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="eabcd5f2-d319-4c76-9aaa-ca912af0a8e3" name="更改" comment="refactor: improve coroutine management and remove media session handling" />
+    <list default="true" id="eabcd5f2-d319-4c76-9aaa-ca912af0a8e3" name="更改" comment="refactor: update project configuration and improve task management">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/audioplayer/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/audioplayer/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -98,7 +109,7 @@
     "cidr.known.project.marker": "true",
     "git-widget-placeholder": "master",
     "last_opened_file_path": "G:/Users/Administrator/Documents/College2/BuildTest/AudioPlayer",
-    "settings.editor.selected.configurable": "com.github.copilot.settings.network.NetworkConfigurable"
+    "settings.editor.selected.configurable": "experimental"
   }
 }]]></component>
   <component name="RunManager">
@@ -223,7 +234,15 @@
       <option name="project" value="LOCAL" />
       <updated>1765872081504</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="refactor: update project configuration and improve task management">
+      <option name="closed" value="true" />
+      <created>1765873262727</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1765873262727</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -243,7 +262,8 @@
     <MESSAGE value="ai构建的基础框架" />
     <MESSAGE value="copilot更改" />
     <MESSAGE value="refactor: improve coroutine management and remove media session handling" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor: improve coroutine management and remove media session handling" />
+    <MESSAGE value="refactor: update project configuration and improve task management" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor: update project configuration and improve task management" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

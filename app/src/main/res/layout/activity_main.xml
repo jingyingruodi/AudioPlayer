@@ -10,4 +10,15 @@
         android:layout_height="match_parent"
         android:padding="8dp" />
 
+    <!-- Empty state placeholder shown when there are no songs or permissions are not granted -->
+    <TextView
+        android:id="@+id/emptyView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="暂无音乐（请授予存储/媒体权限或在设备上添加音乐）"
+        android:textSize="16sp"
+        android:visibility="gone"
+        android:textColor="@color/black" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

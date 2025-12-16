@@ -2,6 +2,7 @@ package com.example.audioplayer
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -39,6 +40,9 @@ class MainActivity : AppCompatActivity() {
         rv.layoutManager = LinearLayoutManager(this)
         rv.adapter = adapter
 
+        // ensure empty state initially hidden until we decide
+        findViewById<android.view.View>(R.id.emptyView).visibility = android.view.View.GONE
+
         checkAndRequestPermission()
     }
 
@@ -62,6 +66,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showPermissionRationale() {
+        // show empty state and explain
+        findViewById<android.view.View>(R.id.emptyView).visibility = android.view.View.VISIBLE
+
         AlertDialog.Builder(this)
             .setTitle("权限需要")
             .setMessage("应用需要读取媒体文件以显示音乐。请在设置中授予权限。")
@@ -78,19 +85,45 @@ class MainActivity : AppCompatActivity() {
     private fun loadSongs() {
         scope.launch {
             val list = withContext(Dispatchers.IO) { MediaRepository.loadAudioFiles(this@MainActivity) }
-            adapter.setItems(list)
+
+            // If no real songs found, provide a debug placeholder so UI can be validated
+            val finalList = if (list.isEmpty() && isDebugBuild()) {
+                val sample = Music(
+                    id = 0L,
+                    title = "示例音乐（无真实文件）",
+                    artist = "调试模式",
+                    album = "",
+                    duration = 0L,
+                    uri = android.net.Uri.EMPTY,
+                    albumArtUri = null
+                )
+                listOf(sample)
+            } else {
+                list
+            }
+
+            adapter.setItems(finalList)
+
+            // toggle empty state view
+            val empty = findViewById<android.view.View>(R.id.emptyView)
+            empty.visibility = if (finalList.isEmpty()) android.view.View.VISIBLE else android.view.View.GONE
+
             // send playlist to service so it can manage queue
-            if (list.isNotEmpty()) {
+            if (finalList.isNotEmpty()) {
                 val intent = Intent(this@MainActivity, MusicService::class.java).apply {
                     action = MusicService.ACTION_PLAY
-                    putParcelableArrayListExtra("playlist", ArrayList(list))
+                    putParcelableArrayListExtra("playlist", ArrayList(finalList))
                 }
                 ContextCompat.startForegroundService(this@MainActivity, intent)
             }
         }
     }
 
-    private fun onSongClicked(song: com.example.audioplayer.Music, pos: Int) {
+    private fun isDebugBuild(): Boolean {
+        return (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    }
+
+    private fun onSongClicked(song: Music, pos: Int) {
         // start service and play
         val intent = Intent(this, MusicService::class.java).apply {
             action = MusicService.ACTION_PLAY
